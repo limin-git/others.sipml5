@@ -877,7 +877,7 @@
 
                                 // limin
                                 oConfigCall.audio_remote.oncanplay = function () {
-                                    on_audio_call_begin(oConfigCall.audio_remote.srcObject);
+                                    start_speech_to_text(oConfigCall.audio_remote.srcObject);
                                 };
                             }
 
@@ -906,7 +906,7 @@
                         }
 
                         // limin
-                        on_audio_call_end();
+                        stop_speech_to_text();
 
                         break;
                     } // 'terminating' | 'terminated'
