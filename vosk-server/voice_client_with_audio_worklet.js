@@ -2,7 +2,7 @@ var context;
 var source;
 var processor;
 var streamLocal;
-var webSocket;
+var local_socket;
 var inputArea;
 var local_input_area;
 const sampleRate = 8000;
@@ -30,13 +30,9 @@ var input_areas;
             i.style.visibility = 'hidden';
         }
 
-        setInterval(function(){
+        setInterval(function () {
             all_input_area.scrollTop = all_input_area.scrollHeight;
         }, 500);
-
-        initWebSocket();
-        init_remote_web_socket();
-        context = new AudioContext({ sampleRate: sampleRate });
     });
 }())
 
@@ -46,6 +42,10 @@ function on_audio_call_begin(remote_stream) {
         i.innerHTML = "";
         i.style.visibility = 'visible';
     }
+
+    context = new AudioContext({ sampleRate: sampleRate });
+    init_local_web_socket();
+    init_remote_web_socket();
 
     navigator.mediaDevices.getUserMedia({
         audio: {
@@ -73,9 +73,8 @@ function on_audio_call_end() {
     text = "";
 
     if (initComplete === true) {
-
-        webSocket.send('{"eof" : 1}');
-        webSocket.close();
+        local_socket.send('{"eof" : 1}');
+        local_socket.close();
 
         try {
             processor.port.close();
@@ -89,6 +88,8 @@ function on_audio_call_end() {
         if (streamLocal.active) {
             streamLocal.getTracks()[0].stop();
         }
+
+        local_socket = null;
 
         // remote
 
@@ -108,6 +109,7 @@ function on_audio_call_end() {
             remote_stream.getTracks()[0].stop();
         }
 
+        remote_web_socket = null;
         initComplete = false;
     }
 }
@@ -119,10 +121,6 @@ function delay(time) {
 
 const handle_local_stream = function (stream) {
     streamLocal = stream;
-
-    if (!context) {
-        context = new AudioContext({ sampleRate: sampleRate });
-    }
 
     context.audioWorklet.addModule('vosk-server/data-conversion-processor.js').then(
         function () {
@@ -138,8 +136,8 @@ const handle_local_stream = function (stream) {
             processor.connect(context.destination);
 
             processor.port.onmessage = event => {
-                if (webSocket.readyState == WebSocket.OPEN) {
-                    webSocket.send(event.data);
+                if (local_socket.readyState == WebSocket.OPEN) {
+                    local_socket.send(event.data);
                 }
             };
 
@@ -186,32 +184,30 @@ const handle_remote_stream = function (stream) {
 };
 
 
-function initWebSocket() {
-    if (webSocket) {
+function init_local_web_socket() {
+    if (local_socket) {
         return;
     }
 
-    webSocket = new WebSocket(wsURL);
-    webSocket.binaryType = "arraybuffer";
+    local_socket = new WebSocket(wsURL);
+    local_socket.binaryType = "arraybuffer";
 
-    webSocket.onopen = function (event) {
+    local_socket.onopen = function (event) {
         console.log('New connection established');
     };
 
-    webSocket.onclose = function (event) {
+    local_socket.onclose = function (event) {
         console.log("WebSocket closed");
     };
 
-    webSocket.onerror = function (event) {
+    local_socket.onerror = function (event) {
         console.error(event.data);
     };
 
-    webSocket.onmessage = function (event) {
+    local_socket.onmessage = function (event) {
         if (event.data) {
             let parsed = JSON.parse(event.data);
             console.log("LOCAL", parsed);
-            // if (parsed.result) console.log(parsed.result);
-            // if (parsed.text) inputArea.innerText = parsed.text;
 
             if (parsed.partial) {
                 local_input_area.innerHTML = "LOCAL: " + parsed.partial;
@@ -248,8 +244,6 @@ function init_remote_web_socket() {
         if (event.data) {
             let parsed = JSON.parse(event.data);
             console.log("REMOTE", parsed);
-            // if (parsed.result) console.log(parsed.result);
-            // if (parsed.text) inputArea.innerText = parsed.text;
 
             if (parsed.partial) {
                 remote_input_area.innerHTML = "REMOTE: " + parsed.partial;
