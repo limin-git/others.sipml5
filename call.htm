@@ -19,6 +19,7 @@
     RELEASE VERSION: 'release/SIPml-api.js'
     -->
     <script src="SIPml-api.js?svn=252" type="text/javascript"> </script>
+    <script src="vosk-server/voice_client_with_audio_worklet.js" type="text/javascript"></script>
 
     <!-- Styles -->
     <link href="./assets/css/bootstrap.css" rel="stylesheet" />
@@ -930,7 +931,15 @@
 
                 case 'm_stream_audio_local_added':
                 case 'm_stream_audio_local_removed':
+                    {
+                        break;
+                    }
                 case 'm_stream_audio_remote_added':
+                    {
+                        // limin
+                        // audioRemote.sreObject
+                        handle_remote(audioRemote.sreObject);
+                    }
                 case 'm_stream_audio_remote_removed':
                     {
                         break;
@@ -1314,6 +1323,30 @@
             <tr><td colspan=3><input type="button" style="width: 100%" class="btn btn-medium btn-danger" value="close" onclick="closeKeyPad();" /></td></tr>
         </table>
     </div>
+
+    <!-- limin begin -->
+
+    <div id="vosk-server-main">
+        <button id="listen">Listen</button>
+        <button id="stopListening">Stop Listening</button>
+        <button id="listenWithScript">Listen With Script Processor</button>
+        <button id="stopListeningWithScript">Stop Listening With Script Processor</button>
+    </div>
+
+    <div id="vosk-server-messages">
+        <!-- <textarea id="q" rows="5" cols="60"></textarea> -->
+        <textarea id="q" rows="10" cols="150"></textarea>
+        <br/>
+        <textarea id="q2" rows="5" cols="150"></textarea>
+        <br/>
+        <textarea id="q-remote" rows="10" cols="150"></textarea>
+        <br/>
+        <textarea id="q2-remote" rows="5" cols="150"></textarea>
+    </div>
+
+    <!-- limin end -->
+
+
     <!-- Call button options -->
     <ul id="ulCallOptions" class="dropdown-menu" style="visibility:hidden">
         <li><a href="#" onclick='sipCall("call-audio");'>Audio</a></li>
