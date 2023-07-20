@@ -23,12 +23,6 @@
     <script src="SIPml-api.js?svn=252" type="text/javascript"> </script>
     <script src="vosk-server/voice_client_with_audio_worklet.js" type="text/javascript"></script>
 
-    <!--
-        limin
-    <script src="vosk-server/data-conversion-processor.js" type="text/javascript"></script>
-    <script src="vosk-server/remote-data-conversion-processor.js" type="text/javascript"></script>
-    -->
-
     <!-- Styles -->
     <link href="./assets/css/bootstrap.css" rel="stylesheet" />
     <style type="text/css">
@@ -876,6 +870,11 @@
                                 stopRingbackTone();
                                 stopRingTone();
 
+                                if (oNotifICall) {
+                                    oNotifICall.cancel();
+                                    oNotifICall = null;
+                                }
+
                                 // limin
                                 if (oConfigCall.audio_remote.srcObject) {
                                     console.log("limin: connected", oConfigCall.audio_remote.srcObject);
@@ -883,11 +882,6 @@
                                 }
                                 else {
                                     console.error("limin: connected, but audio_remote.srcObject is empty");
-                                }
-
-                                if (oNotifICall) {
-                                    oNotifICall.cancel();
-                                    oNotifICall = null;
                                 }
                             }
 
@@ -898,19 +892,6 @@
                                 uiVideoDisplayEvent(false, true);
                                 uiVideoDisplayEvent(true, true);
                             }
-
-                            // limin
-                            // if (bConnected) {
-                            //     on_audio_call_begin();
-
-                            //     if (oConfigCall.audio_remote.srcObject) {
-                            //         console.log("limin: connected", oConfigCall.audio_remote.srcObject);
-                            //         handle_remote(oConfigCall.audio_remote.srcObject);
-                            //     }
-                            //     else {
-                            //         console.error("limin: connected, but audio_remote.srcObject is empty");
-                            //     }
-                            // }
                         }
                         break;
                     } // 'connecting' | 'connected'
@@ -965,39 +946,9 @@
 
                 case 'm_stream_audio_local_added':
                 case 'm_stream_audio_local_removed':
-                    {
-                        break;
-                    }
                 case 'm_stream_audio_remote_added':
-                    {
-                        // limin
-                        // let audio_remote = document.getElementById("audio_remote");
-                        // console.log("limin: m_stream_audio_remote_added");
-
-                        // if (audio_remote.srcObject) {
-                        //     handle_remote(audio_remote.srcObject);
-                        // }
-                        // else {
-                        //     console.error("limin - m_stream_audio_remote_added- srcObject is null");
-                        // }
-
-                        // on_audio_call_begin();
-
-                        // if (oConfigCall.audio_remote.srcObject) {
-                        //     console.log("limin: m_stream_audio_remote_added", oConfigCall.audio_remote.srcObject);
-                        //     handle_remote(audio_remote.srcObject);
-                        // }
-                        // else {
-                        //     console.error("limin: m_stream_audio_remote_added, audio_remote.srcObject is empty");
-                        // }
-
-                        break;
-                    }
                 case 'm_stream_audio_remote_removed':
                     {
-                        // limin
-                        on_audio_call_end();
-
                         break;
                     }
 
@@ -1362,25 +1313,16 @@
                         </td>
                     </tr>
 
-                    <!--
-                        limin
-                    -->
-
+                    <!-- limin -->
                     <tr>
                         <td align="left">
-                            <div id="vosk-server-main">
-                                <button id="listen">Listen</button>
-                                <button id="stopListening">Stop Listening</button>
-                            </div>
-
                             <div id="vosk-server-messages">
-                                <textarea id="q" rows="5" style="width:90%;"></textarea>
                                 <br />
-                                <textarea id="q2" rows="3" style="width:90%;"></textarea>
+                                <textarea id="q-all" rows="30" style="width:100%;"></textarea>
                                 <br />
-                                <textarea id="q-remote" rows="5" style="width:90%;"></textarea>
+                                <textarea id="q-local" rows="3" style="width:100%;"></textarea>
                                 <br />
-                                <textarea id="q2-remote" rows="3" style="width:90%;"></textarea>
+                                <textarea id="q-remote" rows="3" style="width:100%;"></textarea>
                             </div>
 
                         </td>
@@ -1447,30 +1389,6 @@
             </tr>
         </table>
     </div>
-
-    <!-- limin begin -->
-    <!--
-
-    <div id="vosk-server-main">
-        <button id="listen">Listen</button>
-        <button id="stopListening">Stop Listening</button>
-        <button id="listenWithScript">Listen With Script Processor</button>
-        <button id="stopListeningWithScript">Stop Listening With Script Processor</button>
-    </div>
-
-    <div id="vosk-server-messages">
-        <textarea id="q" rows="10" cols="150"></textarea>
-        <br />
-        <textarea id="q2" rows="5" cols="150"></textarea>
-        <br />
-        <textarea id="q-remote" rows="10" cols="150"></textarea>
-        <br />
-        <textarea id="q2-remote" rows="5" cols="150"></textarea>
-    </div>
-
-    -->
-    <!-- limin end -->
-
 
     <!-- Call button options -->
     <ul id="ulCallOptions" class="dropdown-menu" style="visibility:hidden">

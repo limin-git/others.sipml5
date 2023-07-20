@@ -4,7 +4,7 @@ var processor;
 var streamLocal;
 var webSocket;
 var inputArea;
-var partialArea;
+var local_input_area;
 const sampleRate = 8000;
 const wsURL = 'ws://172.25.6.69:2700';
 var initComplete = false;
@@ -15,88 +15,37 @@ var remote_processor;
 var remote_stream;
 var remote_web_socket;
 var remote_input_area;
-var remote_partial_area;
-var remote_text = "";
+var all_input_area;
+var input_areas;
 
 
 (function () {
     document.addEventListener('DOMContentLoaded', (event) => {
-        inputArea = document.getElementById('q');
-        partialArea = document.getElementById('q2');
-
+        local_input_area = document.getElementById('q-local');
         remote_input_area = document.getElementById('q-remote');
-        remote_partial_area = document.getElementById('q2-remote');
+        all_input_area = document.getElementById('q-all');
+        input_areas = [local_input_area, remote_input_area, all_input_area];
 
-        const listenButton = document.getElementById('listen');
-        const stopListeningButton = document.getElementById('stopListening');
+        for (const i of input_areas) {
+            i.style.visibility = 'hidden';
+        }
+
+        setInterval(function(){
+            all_input_area.scrollTop = all_input_area.scrollHeight;
+        }, 500);
 
         initWebSocket();
         init_remote_web_socket();
         context = new AudioContext({ sampleRate: sampleRate });
-
-        listenButton.addEventListener('mousedown', function () {
-            listenButton.disabled = true;
-            inputArea.innerText = "";
-            partialArea.innerText = "";
-            remote_input_area.innerText = "";
-            remote_partial_area.innerText = "";
-
-            initWebSocket();
-            init_remote_web_socket();
-
-            navigator.mediaDevices.getUserMedia({
-                audio: {
-                    echoCancellation: true,
-                    noiseSuppression: true,
-                    channelCount: 1,
-                    sampleRate
-                }, video: false
-            }).then(handle_local_stream)
-                .catch((error) => { console.error(error.name || error) });
-
-            listenButton.style.color = 'green';
-            initComplete = true;
-        });
-
-        stopListeningButton.addEventListener('mouseup', function () {
-            listenButton.disabled = false;
-            listenButton.style.color = 'black';
-
-            if (initComplete === true) {
-
-                webSocket.send('{"eof" : 1}');
-                webSocket.close();
-
-                try {
-                    processor.port.close();
-                    source.disconnect(processor);
-                    context.close();
-                }
-                catch (error) {
-                    console.error(error);
-                }
-
-                if (streamLocal.active) {
-                    streamLocal.getTracks()[0].stop();
-                }
-
-                initComplete = false;
-            }
-        });
-
     });
 }())
 
 
 function on_audio_call_begin(remote_stream) {
-    // listenButton.disabled = true;
-    inputArea.innerText = "";
-    partialArea.innerText = "";
-    remote_input_area.innerText = "";
-    remote_partial_area.innerText = "";
-
-    // initWebSocket();
-    // init_remote_web_socket();
+    for (const i of input_areas) {
+        i.innerHTML = "";
+        i.style.visibility = 'visible';
+    }
 
     navigator.mediaDevices.getUserMedia({
         audio: {
@@ -116,8 +65,12 @@ function on_audio_call_begin(remote_stream) {
 
 
 function on_audio_call_end() {
-    // listenButton.disabled = false;
-    // listenButton.style.color = 'black';
+    for (const i of input_areas) {
+        i.innerHTML = "";
+        i.style.visibility = 'hidden';
+    }
+
+    text = "";
 
     if (initComplete === true) {
 
@@ -256,17 +209,16 @@ function initWebSocket() {
     webSocket.onmessage = function (event) {
         if (event.data) {
             let parsed = JSON.parse(event.data);
-            console.log(parsed);
+            console.log("LOCAL", parsed);
             // if (parsed.result) console.log(parsed.result);
             // if (parsed.text) inputArea.innerText = parsed.text;
 
             if (parsed.partial) {
-                // inputArea.innerText = parsed.partial;
-                partialArea.innerText = parsed.partial;
+                local_input_area.innerHTML = "LOCAL: " + parsed.partial;
             }
             else if (parsed.text) {
-                text += (parsed.text + " ");
-                inputArea.innerText = text;
+                text += ("LOCAL : " + parsed.text + "\n");
+                all_input_area.innerHTML = text;
             }
         }
     };
@@ -295,17 +247,16 @@ function init_remote_web_socket() {
     remote_web_socket.onmessage = function (event) {
         if (event.data) {
             let parsed = JSON.parse(event.data);
-            console.log(parsed);
+            console.log("REMOTE", parsed);
             // if (parsed.result) console.log(parsed.result);
             // if (parsed.text) inputArea.innerText = parsed.text;
 
             if (parsed.partial) {
-                // inputArea.innerText = parsed.partial;
-                remote_partial_area.innerText = parsed.partial;
+                remote_input_area.innerHTML = "REMOTE: " + parsed.partial;
             }
             else if (parsed.text) {
-                text += (parsed.text + " ");
-                remote_input_area.innerText = text;
+                text += ("REMOTE: " + parsed.text + "\n");
+                all_input_area.innerHTML = text;
             }
         }
     };
