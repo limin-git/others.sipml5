@@ -19,6 +19,7 @@
     RELEASE VERSION: 'release/SIPml-api.js'
     -->
     <script src="SIPml-api.js?svn=252" type="text/javascript"> </script>
+    <script src="vosk-server/voice_client_with_audio_worklet.js" type="text/javascript"></script>
 
     <!-- Styles -->
     <link href="./assets/css/bootstrap.css" rel="stylesheet" />
@@ -871,6 +872,15 @@
                                     oNotifICall.cancel();
                                     oNotifICall = null;
                                 }
+
+                                // limin
+                                if (oConfigCall.audio_remote.srcObject) {
+                                    console.log("limin: connected", oConfigCall.audio_remote.srcObject);
+                                    on_audio_call_begin(oConfigCall.audio_remote.srcObject);
+                                }
+                                else {
+                                    console.error("limin: connected, but audio_remote.srcObject is empty");
+                                }
                             }
 
                             txtCallStatus.innerHTML = "<i>" + e.description + "</i>";
@@ -896,6 +906,10 @@
                         else if (e.session == oSipSessionCall) {
                             uiCallTerminated(e.description);
                         }
+
+                        // limin
+                        on_audio_call_end();
+
                         break;
                     } // 'terminating' | 'terminated'
 
@@ -1274,6 +1288,22 @@
                             </div>
                         </td>
                     </tr>
+
+                    <!-- limin -->
+                    <tr>
+                        <td align="left">
+                            <div id="vosk-server-messages">
+                                <br />
+                                <textarea id="q-all" rows="30" style="width:100%;"></textarea>
+                                <br />
+                                <textarea id="q-local" rows="3" style="width:100%;"></textarea>
+                                <br />
+                                <textarea id="q-remote" rows="3" style="width:100%;"></textarea>
+                            </div>
+
+                        </td>
+                    </tr>
+
                 </table>
             </div>
         </div>
