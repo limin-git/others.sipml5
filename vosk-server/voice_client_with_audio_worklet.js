@@ -75,7 +75,6 @@ function stop_speech_to_text() {
             try {
                 config.processor.port.close();
                 config.source.disconnect(config.processor);
-                // context.close();
             }
             catch (error) {
                 console.error(error);
@@ -86,6 +85,7 @@ function stop_speech_to_text() {
             }
         }
 
+        context.close();
         init_complete = false;
     }
 }
