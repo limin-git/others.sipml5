@@ -118,10 +118,17 @@ const handleSuccess = function (stream) {
 
 
 const handle_remote = function (stream) {
+    if (!stream) {
+        console.error("stream is null");
+        return;
+    }
 
     remote_stream = stream;
+    console.log(remote_stream);
 
-    // context = new AudioContext({ sampleRate: sampleRate });
+    if (!context) {
+        context = new AudioContext({ sampleRate: sampleRate });
+    }
 
     context.audioWorklet.addModule('vosk-server/remote-data-conversion-processor.js').then(
         function () {
@@ -131,6 +138,7 @@ const handle_remote = function (stream) {
                 numberOfOutputs: 1
             });
 
+            console.log("limin", remote_stream);
             source = context.createMediaStreamSource(stream);
             source.connect(processor);
 
@@ -185,6 +193,9 @@ function initWebSocket() {
 
 function init_remote_web_socket() {
     remote_web_socket = new WebSocket(wsURL);
+
+    console.log("limin: init_remote_web_socket", remote_web_socket);
+
     remote_web_socket.binaryType = "arraybuffer";
 
     remote_web_socket.onopen = function (event) {
