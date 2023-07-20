@@ -625,7 +625,7 @@
                 if (oNotifICall) {
                     oNotifICall.cancel();
                 }
-                oNotifICall = window.webkitNotifications.createNotification('images/sipml-34x39.png', 'Incaming call', 'Incoming call from ' + s_number);
+                oNotifICall = window.webkitNotifications.createNotification('./images/sipml-34x39.png', 'Incaming call', 'Incoming call from ' + s_number);
                 oNotifICall.onclose = function () { oNotifICall = null; };
                 oNotifICall.show();
             }
@@ -1123,7 +1123,8 @@
                 <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
                     <span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span>
                 </a>
-                <img alt="sipML5" class="brand" src="./images/sipml-34x39.png" />
+                <!-- <img alt="sipML5" class="brand" src="./images/sipml-34x39.png" /> -->
+                <img alt="sipML5" class="brand" />
                 <div class="nav-collapse">
                     <ul class="nav">
                         <li class="active"><a href="index.htmlsvn=236">Home</a></li>
