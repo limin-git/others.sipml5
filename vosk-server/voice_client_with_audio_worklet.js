@@ -41,7 +41,7 @@ function start_speech_to_text(remote_stream) {
         i.style.visibility = 'visible';
     }
 
-    context = new AudioContext({ sample_rate: sample_rate });
+    context = new AudioContext({ sampleRate: sample_rate });
     init_local_web_socket();
     init_remote_web_socket();
 
