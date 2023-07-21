@@ -150,7 +150,13 @@ function init_web_socket(config) {
                 config.input_area.innerHTML = config.name + ": " + parsed.partial;
             }
             else if (parsed.text) {
-                text += (config.name + ": " + parsed.text + "\n");
+                // text += (config.name + ": " + parsed.text + "\n");
+                if (config.name == "LOCAL") {
+                    text += ('<p align="right">' + parsed.text + "</p>");
+                }
+                else {
+                    text += ('<p align="left">' + parsed.text + "</p>");
+                }
                 input_area.innerHTML = text;
             }
         }
