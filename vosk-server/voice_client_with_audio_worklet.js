@@ -31,10 +31,6 @@ var div_stt;
         div_stt = document.getElementById('stt-div');
         div_stt.style.visibility = 'hidden';
 
-        for (const i of input_areas) {
-            // i.style.visibility = 'hidden';
-        }
-
         setInterval(function () {
             input_area.scrollTop = input_area.scrollHeight;
         }, 100);
@@ -48,8 +44,8 @@ function start_speech_to_text(remote_stream) {
 
     for (const i of input_areas) {
         i.innerHTML = "";
-        // i.style.visibility = 'visible';
     }
+
     div_stt.style.visibility = 'visible';
 
     context = new AudioContext({ sampleRate: sample_rate });
@@ -73,10 +69,9 @@ function start_speech_to_text(remote_stream) {
 function stop_speech_to_text() {
     for (const i of input_areas) {
         i.innerHTML = "";
-        // i.style.visibility = 'hidden';
     }
-    div_stt.style.visibility = 'hidden';
 
+    div_stt.style.visibility = 'hidden';
     text = "";
 
     if (init_complete === true) {
