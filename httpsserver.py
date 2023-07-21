@@ -1,7 +1,8 @@
-from http.server import HTTPServer, SimpleHTTPRequestHandler
+from http.server import HTTPServer, ThreadingHTTPServer, SimpleHTTPRequestHandler
 import ssl
 
-httpd = HTTPServer(('192.168.10.198', 4443), SimpleHTTPRequestHandler)
+# httpd = HTTPServer(('', 4443), SimpleHTTPRequestHandler)
+httpd = ThreadingHTTPServer(('', 4443), SimpleHTTPRequestHandler)
 
 httpd.socket = ssl.wrap_socket(httpd.socket,
                                server_side=True,

@@ -876,13 +876,19 @@
                                 }
 
                                 // limin
-                                if (oConfigCall.audio_remote.srcObject) {
-                                    console.log("limin: connected", oConfigCall.audio_remote.srcObject);
-                                    on_audio_call_begin(oConfigCall.audio_remote.srcObject);
-                                }
-                                else {
-                                    console.error("limin: connected, but audio_remote.srcObject is empty");
-                                }
+                                var stt_started = false;
+                                function try_start_stt() {
+                                    if (!stt_started) {
+                                        if (!oConfigCall.audio_remote.srcObject) {
+                                            setTimeout(try_start_stt, 100);
+                                        }
+
+                                        stt_started = true;
+                                        start_speech_to_text(oConfigCall.audio_remote.srcObject);
+                                    }
+                                };
+
+                                setTimeout(try_start_stt, 100);
                             }
 
                             txtCallStatus.innerHTML = "<i>" + e.description + "</i>";
@@ -910,7 +916,7 @@
                         }
 
                         // limin
-                        on_audio_call_end();
+                        stop_speech_to_text();
 
                         break;
                     } // 'terminating' | 'terminated'

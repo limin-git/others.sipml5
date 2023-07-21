@@ -1,70 +1,69 @@
-var context;
-var source;
-var processor;
-var streamLocal;
-var webSocket;
-var inputArea;
-var local_input_area;
-const sampleRate = 8000;
-const wsURL = 'ws://172.25.6.69:2700';
-var initComplete = false;
+const sample_rate = 8000;
+const ws_url = 'ws://172.25.6.69:2700';
+var init_complete = false;
 var text = "";
-
-var remote_source;
-var remote_processor;
-var remote_stream;
-var remote_web_socket;
-var remote_input_area;
-var all_input_area;
+var context;
+var input_area;
 var input_areas;
 
+function Config(name) {
+    this.name = name;
+    this.source;
+    this.processor;
+    this.stream;
+    this.web_socket;
+    this.input_area;
+}
+
+var local_config = new Config("LOCAL");
+var remote_config = new Config("REMOTE");
 
 (function () {
     document.addEventListener('DOMContentLoaded', (event) => {
-        local_input_area = document.getElementById('q-local');
-        remote_input_area = document.getElementById('q-remote');
-        all_input_area = document.getElementById('q-all');
-        input_areas = [local_input_area, remote_input_area, all_input_area];
+        local_config.input_area = document.getElementById('q-local');
+        remote_config.input_area = document.getElementById('q-remote');
+        input_area = document.getElementById('q-all');
+        input_areas = [local_config.input_area, remote_config.input_area, input_area];
 
         for (const i of input_areas) {
             i.style.visibility = 'hidden';
         }
 
-        setInterval(function(){
-            all_input_area.scrollTop = all_input_area.scrollHeight;
-        }, 500);
-
-        initWebSocket();
-        init_remote_web_socket();
-        context = new AudioContext({ sampleRate: sampleRate });
+        setInterval(function () {
+            input_area.scrollTop = input_area.scrollHeight;
+        }, 100);
     });
 }())
 
+function start_speech_to_text(remote_stream) {
+    if (context) {
+        return;
+    }
 
-function on_audio_call_begin(remote_stream) {
     for (const i of input_areas) {
         i.innerHTML = "";
         i.style.visibility = 'visible';
     }
+
+    context = new AudioContext({ sampleRate: sample_rate });
+    init_local_web_socket();
+    init_remote_web_socket();
 
     navigator.mediaDevices.getUserMedia({
         audio: {
             echoCancellation: true,
             noiseSuppression: true,
             channelCount: 1,
-            sampleRate
+            sample_rate
         }, video: false
     }).then(handle_local_stream)
         .catch((error) => { console.error(error.name || error) });
 
     handle_remote_stream(remote_stream);
-
-    // listenButton.style.color = 'green';
-    initComplete = true;
+    init_complete = true;
 }
 
-
-function on_audio_call_end() {
+function stop_speech_to_text() {
     for (const i of input_areas) {
         i.innerHTML = "";
         i.style.visibility = 'hidden';
@@ -72,192 +71,91 @@ function on_audio_call_end() {
 
     text = "";
 
-    if (initComplete === true) {
+    if (init_complete === true) {
+        for (const config of [local_config, remote_config]) {
+            config.web_socket.send('{"eof" : 1}');
+            config.web_socket.close();
 
-        webSocket.send('{"eof" : 1}');
-        webSocket.close();
+            try {
+                config.processor.port.close();
+                config.source.disconnect(config.processor);
+            }
+            catch (error) {
+                console.error(error);
+            }
 
-        try {
-            processor.port.close();
-            source.disconnect(processor);
-            // context.close();
-        }
-        catch (error) {
-            console.error(error);
-        }
-
-        if (streamLocal.active) {
-            streamLocal.getTracks()[0].stop();
-        }
-
-        // remote
-
-        remote_web_socket.send('{"eof" : 1}');
-        remote_web_socket.close();
-
-        try {
-            remote_processor.port.close();
-            remote_source.disconnect(remote_processor);
-            context.close();
-        }
-        catch (error) {
-            console.error(error);
+            if (config.stream.active) {
+                config.stream.getTracks()[0].stop();
+            }
         }
 
-        if (remote_stream.active) {
-            remote_stream.getTracks()[0].stop();
-        }
-
-        initComplete = false;
+        context.close();
+        context = undefined;
+        init_complete = false;
     }
 }
 
-function delay(time) {
-    return new Promise(resolve => setTimeout(resolve, time));
-}
-
-
-const handle_local_stream = function (stream) {
-    streamLocal = stream;
-
-    if (!context) {
-        context = new AudioContext({ sampleRate: sampleRate });
-    }
+const handle_stream = function (config, stream) {
+    config.stream = stream;
 
     context.audioWorklet.addModule('vosk-server/data-conversion-processor.js').then(
         function () {
-            processor = new AudioWorkletNode(context, 'data-conversion-processor', {
+            config.processor = new AudioWorkletNode(context, 'data-conversion-processor', {
                 channelCount: 1,
                 numberOfInputs: 1,
                 numberOfOutputs: 1
             });
 
-            source = context.createMediaStreamSource(stream);
-            source.connect(processor);
+            config.source = context.createMediaStreamSource(stream);
+            config.source.connect(config.processor);
 
-            processor.connect(context.destination);
+            config.processor.connect(context.destination);
 
-            processor.port.onmessage = event => {
-                if (webSocket.readyState == WebSocket.OPEN) {
-                    webSocket.send(event.data);
+            config.processor.port.onmessage = event => {
+                if (config.web_socket.readyState == WebSocket.OPEN) {
+                    config.web_socket.send(event.data);
                 }
             };
 
-            processor.port.start();
+            config.processor.port.start();
         }
     );
 };
 
+const handle_local_stream = handle_stream.bind(null, local_config);
+const handle_remote_stream = handle_stream.bind(null, remote_config);
 
-const handle_remote_stream = function (stream) {
-    if (!stream) {
-        console.error("stream is null");
-        return;
-    }
+function init_web_socket(config) {
+    config.web_socket = new WebSocket(ws_url);
+    config.web_socket.binaryType = "arraybuffer";
 
-    remote_stream = stream;
-
-    if (!context) {
-        context = new AudioContext({ sampleRate: sampleRate });
-    }
-
-    context.audioWorklet.addModule('vosk-server/data-conversion-processor.js').then(
-        function () {
-            remote_processor = new AudioWorkletNode(context, 'data-conversion-processor', {
-                channelCount: 1,
-                numberOfInputs: 1,
-                numberOfOutputs: 1
-            });
-
-            remote_source = context.createMediaStreamSource(stream);
-            remote_source.connect(remote_processor);
-
-            remote_processor.connect(context.destination);
-
-            remote_processor.port.onmessage = event => {
-                if (remote_web_socket.readyState == WebSocket.OPEN) {
-                    remote_web_socket.send(event.data);
-                }
-            };
-
-            remote_processor.port.start();
-        }
-    );
-};
-
-
-function initWebSocket() {
-    if (webSocket) {
-        return;
-    }
-
-    webSocket = new WebSocket(wsURL);
-    webSocket.binaryType = "arraybuffer";
-
-    webSocket.onopen = function (event) {
+    config.web_socket.onopen = function (event) {
         console.log('New connection established');
     };
 
-    webSocket.onclose = function (event) {
+    config.web_socket.onclose = function (event) {
         console.log("WebSocket closed");
     };
 
-    webSocket.onerror = function (event) {
+    config.web_socket.onerror = function (event) {
         console.error(event.data);
     };
 
-    webSocket.onmessage = function (event) {
+    config.web_socket.onmessage = function (event) {
         if (event.data) {
             let parsed = JSON.parse(event.data);
-            console.log("LOCAL", parsed);
-            // if (parsed.result) console.log(parsed.result);
-            // if (parsed.text) inputArea.innerText = parsed.text;
+            console.log(config.name, parsed);
 
             if (parsed.partial) {
-                local_input_area.innerHTML = "LOCAL: " + parsed.partial;
+                config.input_area.innerHTML = config.name + ": " + parsed.partial;
             }
             else if (parsed.text) {
-                text += ("LOCAL : " + parsed.text + "\n");
-                all_input_area.innerHTML = text;
+                text += (config.name + ": " + parsed.text + "\n");
+                input_area.innerHTML = text;
             }
         }
     };
 }
 
-function init_remote_web_socket() {
-    if (remote_web_socket) {
-        return;
-    }
-
-    remote_web_socket = new WebSocket(wsURL);
-    remote_web_socket.binaryType = "arraybuffer";
-
-    remote_web_socket.onopen = function (event) {
-        console.log('New remote connection established');
-    };
-
-    remote_web_socket.onclose = function (event) {
-        console.log("remote WebSocket closed");
-    };
-
-    remote_web_socket.onerror = function (event) {
-        console.error(event.data);
-    };
-
-    remote_web_socket.onmessage = function (event) {
-        if (event.data) {
-            let parsed = JSON.parse(event.data);
-            console.log("REMOTE", parsed);
-            // if (parsed.result) console.log(parsed.result);
-            // if (parsed.text) inputArea.innerText = parsed.text;
-
-            if (parsed.partial) {
-                remote_input_area.innerHTML = "REMOTE: " + parsed.partial;
-            }
-            else if (parsed.text) {
-                text += ("REMOTE: " + parsed.text + "\n");
-                all_input_area.innerHTML = text;
-            }
-        }
-    };
-}
+const init_local_web_socket = init_web_socket.bind(null, local_config);
+const init_remote_web_socket = init_web_socket.bind(null, remote_config);
