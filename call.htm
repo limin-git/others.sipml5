@@ -876,19 +876,18 @@
                                 }
 
                                 // limin
-                                var stt_started = false;
-                                function try_start_stt() {
-                                    if (!stt_started) {
+                                var stt_inprogress = false;
+                                setTimeout(function try_start_stt() {
+                                    if (!stt_inprogress) {
                                         if (!oConfigCall.audio_remote.srcObject) {
                                             setTimeout(try_start_stt, 100);
+                                            return;
                                         }
 
-                                        stt_started = true;
+                                        stt_inprogress = true;
                                         start_speech_to_text(oConfigCall.audio_remote.srcObject);
                                     }
-                                };
-
-                                setTimeout(try_start_stt, 100);
+                                }, 100);
                             }
 
                             txtCallStatus.innerHTML = "<i>" + e.description + "</i>";
