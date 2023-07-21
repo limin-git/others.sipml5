@@ -6,28 +6,30 @@ var context;
 var input_area;
 var input_areas;
 
-function Config(name) {
+function Config(name, align) {
     this.name = name;
     this.source;
     this.processor;
     this.stream;
     this.web_socket;
     this.input_area;
+    this.align = align;
 }
 
-var local_config = new Config("LOCAL");
-var remote_config = new Config("REMOTE");
+var local_config = new Config("LOCAL", "right");
+var remote_config = new Config("REMOTE", "left");
+
+var div_stt;
 
 (function () {
     document.addEventListener('DOMContentLoaded', (event) => {
-        local_config.input_area = document.getElementById('q-local');
-        remote_config.input_area = document.getElementById('q-remote');
-        input_area = document.getElementById('q-all');
+        local_config.input_area = document.getElementById('stt-local');
+        remote_config.input_area = document.getElementById('stt-remote');
+        input_area = document.getElementById('stt-all');
         input_areas = [local_config.input_area, remote_config.input_area, input_area];
 
-        for (const i of input_areas) {
-            i.style.visibility = 'hidden';
-        }
+        div_stt = document.getElementById('stt-div');
+        div_stt.style.visibility = 'hidden';
 
         setInterval(function () {
             input_area.scrollTop = input_area.scrollHeight;
@@ -36,10 +38,15 @@ var remote_config = new Config("REMOTE");
 }())
 
 function start_speech_to_text(remote_stream) {
+    if (context) {
+        return;
+    }
+
     for (const i of input_areas) {
         i.innerHTML = "";
-        i.style.visibility = 'visible';
     }
+
+    div_stt.style.visibility = 'visible';
 
     context = new AudioContext({ sampleRate: sample_rate });
     init_local_web_socket();
@@ -62,9 +69,9 @@ function start_speech_to_text(remote_stream) {
 function stop_speech_to_text() {
     for (const i of input_areas) {
         i.innerHTML = "";
-        i.style.visibility = 'hidden';
     }
 
+    div_stt.style.visibility = 'hidden';
     text = "";
 
     if (init_complete === true) {
@@ -86,6 +93,7 @@ function stop_speech_to_text() {
         }
 
         context.close();
+        context = undefined;
         init_complete = false;
     }
 }
@@ -142,10 +150,11 @@ function init_web_socket(config) {
             console.log(config.name, parsed);
 
             if (parsed.partial) {
-                config.input_area.innerHTML = config.name + ": " + parsed.partial;
+                config.input_area.innerHTML = parsed.partial;
             }
             else if (parsed.text) {
-                text += (config.name + ": " + parsed.text + "\n");
+                // text += (config.name + ": " + parsed.text + "\n");
+                text += ('<p align="' + config.align + '">' + parsed.text + "</p>");
                 input_area.innerHTML = text;
             }
         }

@@ -128,6 +128,19 @@
             height: 72px;
             margin-top: -42px;
         }
+
+        .stt-textarea {
+            min-height: 100px;
+            height: 500px;
+            width: 100%;
+            padding: 4px;
+            border: 1px solid #888;
+            border-radius: 4px;
+            resize: vertical;
+            overflow-y: scroll;
+            background-color: white;
+            color: black;
+        }
     </style>
     <link href="./assets/css/bootstrap-responsive.css" rel="stylesheet" />
     <!-- Le fav and touch icons -->
@@ -876,9 +889,18 @@
                                 }
 
                                 // limin
-                                oConfigCall.audio_remote.oncanplay = function () {
-                                    start_speech_to_text(oConfigCall.audio_remote.srcObject);
-                                };
+                                var stt_inprogress = false;
+                                setTimeout(function try_start_stt() {
+                                    if (!stt_inprogress) {
+                                        if (!oConfigCall.audio_remote.srcObject) {
+                                            setTimeout(try_start_stt, 100);
+                                            return;
+                                        }
+
+                                        stt_inprogress = true;
+                                        start_speech_to_text(oConfigCall.audio_remote.srcObject);
+                                    }
+                                }, 100);
                             }
 
                             txtCallStatus.innerHTML = "<i>" + e.description + "</i>";
@@ -1313,13 +1335,19 @@
                     <!-- limin -->
                     <tr>
                         <td align="left">
-                            <div id="vosk-server-messages">
+                            <div id="stt-div">
                                 <br />
-                                <textarea id="q-all" rows="30" style="width:100%;"></textarea>
+                                <!-- <textarea id="q-all" rows="30" style="width:100%;"></textarea> -->
+                                <div id="stt-all" class="stt-textarea" contenteditable="true">
+                                </div>
                                 <br />
-                                <textarea id="q-local" rows="3" style="width:100%;"></textarea>
                                 <br />
-                                <textarea id="q-remote" rows="3" style="width:100%;"></textarea>
+                                <label for="stt-local">LOCAL</label>
+                                <textarea id="stt-local" rows="3" style="width:100%;"></textarea>
+                                <br />
+                                <br />
+                                <label for="stt-remote">REMOTE</label>
+                                <textarea id="stt-remote" rows="3" style="width:100%;"></textarea>
                             </div>
 
                         </td>

@@ -6,7 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="5c5edb49-9f70-48f8-9d0a-10a4bbe40a49" name="更改" comment="">
       <change beforePath="$PROJECT_DIR$/call.htm" beforeDir="false" afterPath="$PROJECT_DIR$/call.htm" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/httpsserver.py" beforeDir="false" afterPath="$PROJECT_DIR$/httpsserver.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vosk-server/voice_client_with_audio_worklet.js" beforeDir="false" afterPath="$PROJECT_DIR$/vosk-server/voice_client_with_audio_worklet.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
