@@ -1,4 +1,4 @@
-const sample_rate = 8000;
+const sampleRate = 8000;
 const ws_url = 'ws://172.25.6.69:2700';
 var init_complete = false;
 var text = "";
@@ -6,14 +6,16 @@ var context;
 var input_area;
 var input_areas;
 
-function Config(name, align) {
-    this.name = name;
-    this.source;
-    this.processor;
-    this.stream;
-    this.web_socket;
-    this.input_area;
-    this.align = align;
+class Config {
+    constructor(name, align) {
+        this.name = name;
+        this.source;
+        this.processor;
+        this.stream;
+        this.web_socket;
+        this.input_area;
+        this.align = align;
+    }
 }
 
 var local_config = new Config("LOCAL", "right");
@@ -48,7 +50,7 @@ function start_speech_to_text(remote_stream) {
 
     div_stt.style.visibility = 'visible';
 
-    context = new AudioContext({ sampleRate: sample_rate });
+    context = new AudioContext({ sampleRate: sampleRate });
     init_local_web_socket();
     init_remote_web_socket();
 
@@ -57,7 +59,7 @@ function start_speech_to_text(remote_stream) {
             echoCancellation: true,
             noiseSuppression: true,
             channelCount: 1,
-            sample_rate
+            sampleRate
         }, video: false
     }).then(handle_local_stream)
         .catch((error) => { console.error(error.name || error) });
@@ -156,6 +158,7 @@ function init_web_socket(config) {
                 // text += (config.name + ": " + parsed.text + "\n");
                 text += ('<p align="' + config.align + '">' + parsed.text + "</p>");
                 input_area.innerHTML = text;
+                config.input_area.innerHTML = parsed.text;
             }
         }
     };
